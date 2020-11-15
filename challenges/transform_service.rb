@@ -23,5 +23,3 @@ class TransformService
     text.upcase
   end
 end
-
-TransformService.new(1234)
