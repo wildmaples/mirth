@@ -9,7 +9,8 @@ class TransformService
 
       while input = client.gets
         puts "Received #{input.chomp} from a client socket on #{port}"
-        client.puts capitalize(input)
+        client.puts capitalize(input) * 3
+        client.puts "Ok, next"
       end
 
       puts "Closing client socket"
