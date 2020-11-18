@@ -1,0 +1,7 @@
+echo "Pushing to production master!"
+git push --force-with-lease production master
+
+echo "Restarting systemctl..."
+ssh ubuntu@mirth systemctl --user restart mirth
+
+echo "Done!"
