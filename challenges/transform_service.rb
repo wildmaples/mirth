@@ -6,21 +6,12 @@ class TransformService
 
     loop do
       client = server.accept
+      request_line = client.readline
+      method_token, target, version_number = request_line.split
 
-      while input = client.gets
-        puts "Received #{input.chomp} from a client socket on #{port}"
-        client.puts capitalize(input) * 3
-        client.puts "Ok, next"
-      end
-
-      puts "Closing client socket"
+      puts "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
+      puts "🛑 Closing client socket"
       client.close
     end
-  end
-
-  private
-
-  def capitalize(text)
-    text.upcase
   end
 end
