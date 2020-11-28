@@ -1,6 +1,6 @@
 require 'socket'
 
-class TransformService
+class Service
   def initialize(port)
     server = TCPServer.new(port)
 

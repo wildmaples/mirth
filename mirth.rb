@@ -1,4 +1,4 @@
-require_relative 'challenges/transform_service'
+require_relative 'service'
 
 $stdout.sync = true # Turn on auto-flushing
-TransformService.new(1234)
+Service.new(1234)
