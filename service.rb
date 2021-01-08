@@ -26,6 +26,7 @@ class Service
           response_message << "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
         end
         response_message << "</ul>\n"
+        response_message << daily_data_form
       else
         response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
         content_type = "text/plain"
@@ -45,5 +46,17 @@ class Service
 
       client.close
     end
+  end
+
+  def daily_data_form
+    <<~STR
+      <form action="/add-daily-data" method="post" enctype="application/x-www-form-urlencoded">
+        <p><label>Date <input type="date" name="date"></label></p>
+        <p><label>Step Count <input type="number" name="step_count"></label></p>
+        <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
+
+        <p><button>Submit daily data</button></p>
+      </form>
+    STR
   end
 end
