@@ -27,6 +27,26 @@ class Service
         end
         response_message << "</ul>\n"
         response_message << daily_data_form
+      when ["POST", "/add-daily-data"]
+        content_type = "text/html"
+
+        while not client.eof?
+          line = client.readline
+          if line.include?("Content-Length: ")
+            line.slice!("Content-Length: ")
+            content_length = line.to_i
+            break
+          end
+        end
+
+        while not client.eof?
+          line = client.readline
+          if line == "\r\n"
+            body = client.read(content_length)
+          end
+        end
+
+        response_message =  "WIP: POST RESPONSE"
       else
         response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
         content_type = "text/plain"
