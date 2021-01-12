@@ -27,7 +27,7 @@ class Service
         end
         response_message << "</ul>\n"
         response_message << daily_data_form
-      when ["POST", "/add-daily-data"]
+      when ["POST", "/show/data"]
         content_type = "text/html"
 
         while not client.eof?
@@ -43,10 +43,22 @@ class Service
           line = client.readline
           if line == "\r\n"
             body = client.read(content_length)
+            break
           end
         end
 
-        response_message =  "WIP: POST RESPONSE"
+        new_daily_data = Hash[URI.decode_www_form(body)]
+
+        all_data << new_daily_data.transform_keys(&:to_sym)
+
+        # Copy paste from GET /show/data
+        response_message = ""
+        response_message << "<ul>\n"
+        all_data.each do |daily_data|
+          response_message << "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
+        end
+        response_message << "</ul>\n"
+        response_message << daily_data_form
       else
         response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
         content_type = "text/plain"
@@ -70,7 +82,7 @@ class Service
 
   def daily_data_form
     <<~STR
-      <form action="/add-daily-data" method="post" enctype="application/x-www-form-urlencoded">
+      <form action="/show/data" method="post" enctype="application/x-www-form-urlencoded">
         <p><label>Date <input type="date" name="date"></label></p>
         <p><label>Step Count <input type="number" name="step_count"></label></p>
         <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
