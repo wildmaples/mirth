@@ -1,5 +1,6 @@
 require 'socket'
 require 'cgi'
+require 'uri'
 
 class Service
   def initialize(port)
@@ -19,6 +20,8 @@ class Service
       case [method_token, target]
       when ["GET", "/show/data"]
         content_type = "text/html"
+        response_status_code = "200 OK"
+
         response_message = ""
 
         response_message << "<ul>\n"
@@ -27,10 +30,11 @@ class Service
         end
         response_message << "</ul>\n"
         response_message << daily_data_form
-      when ["POST", "/show/data"]
+      when ["POST", "/add/data"]
         content_type = "text/html"
+        response_status_code = "201 Created"
 
-        while not client.eof?
+        while true
           line = client.readline
           if line.include?("Content-Length: ")
             line.slice!("Content-Length: ")
@@ -39,7 +43,7 @@ class Service
           end
         end
 
-        while not client.eof?
+        while true
           line = client.readline
           if line == "\r\n"
             body = client.read(content_length)
@@ -47,26 +51,24 @@ class Service
           end
         end
 
-        new_daily_data = Hash[URI.decode_www_form(body)]
+        new_daily_data = URI.decode_www_form(body).to_h
 
         all_data << new_daily_data.transform_keys(&:to_sym)
 
-        # Copy paste from GET /show/data
         response_message = ""
-        response_message << "<ul>\n"
-        all_data.each do |daily_data|
-          response_message << "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
-        end
-        response_message << "</ul>\n"
-        response_message << daily_data_form
       else
-        response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
         content_type = "text/plain"
+        response_status_code = "200 OK"
+        response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
       end
 
       puts response_message
+
+      # I hardcoded the Location here for simplicity.
+      # It will be refactored later
       http_response = <<~MSG
-        #{version_number} 200 OK
+        #{version_number} #{response_status_code}
+        Location: /show/data
         Content-Type: #{content_type}; charset=#{response_message.encoding.name}
 
         #{response_message}
@@ -82,7 +84,7 @@ class Service
 
   def daily_data_form
     <<~STR
-      <form action="/show/data" method="post" enctype="application/x-www-form-urlencoded">
+      <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
         <p><label>Date <input type="date" name="date"></label></p>
         <p><label>Step Count <input type="number" name="step_count"></label></p>
         <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
