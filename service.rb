@@ -2,6 +2,8 @@ require 'socket'
 require 'cgi'
 require 'uri'
 
+require_relative './http_request'
+
 class Service
   def initialize(port)
     server = TCPServer.new(port)
@@ -33,29 +35,13 @@ class Service
       when ["POST", "/add/data"]
         content_type = "text/html"
         response_status_code = "201 Created"
-
-        while true
-          line = client.readline
-          if line.include?("Content-Length: ")
-            line.slice!("Content-Length: ")
-            content_length = line.to_i
-            break
-          end
-        end
-
-        while true
-          line = client.readline
-          if line == "\r\n"
-            body = client.read(content_length)
-            break
-          end
-        end
-
-        new_daily_data = URI.decode_www_form(body).to_h
-
-        all_data << new_daily_data.transform_keys(&:to_sym)
-
         response_message = ""
+
+        headers = HttpRequest.headers(client)
+        body = client.read(headers['Content-Length'].to_i)
+        
+        new_daily_data = URI.decode_www_form(body).to_h
+        all_data << new_daily_data.transform_keys(&:to_sym)
       else
         content_type = "text/plain"
         response_status_code = "200 OK"
@@ -68,8 +54,8 @@ class Service
       # It will be refactored later
       http_response = <<~MSG
         #{version_number} #{response_status_code}
-        Location: /show/data
         Content-Type: #{content_type}; charset=#{response_message.encoding.name}
+        Location: /show/data
 
         #{response_message}
       MSG
