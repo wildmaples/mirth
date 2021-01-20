@@ -34,12 +34,12 @@ class Service
         response_message << daily_data_form
       when ["POST", "/add/data"]
         content_type = "text/html"
-        response_status_code = "201 Created"
+        response_status_code = "303 See Other"
         response_message = ""
 
         headers = HttpRequest.headers(client)
         body = client.read(headers['Content-Length'].to_i)
-        
+
         new_daily_data = URI.decode_www_form(body).to_h
         all_data << new_daily_data.transform_keys(&:to_sym)
       else
