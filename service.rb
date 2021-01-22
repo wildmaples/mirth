@@ -1,18 +1,14 @@
 require 'socket'
 require 'cgi'
 require 'uri'
+require 'yaml/store'
 
 require_relative './http_request'
 
 class Service
   def initialize(port)
     server = TCPServer.new(port)
-
-    all_data = [
-      { date: '01/01/2021', step_count: '10000', notes: 'This was a good day' },
-      { date: '02/01/2021', step_count: '142', notes: 'This was a great day' },
-      { date: '03/01/2021', step_count: '68472', notes: 'my favourite HTML tags are <p> and <script>' },
-    ]
+    store = YAML::Store.new("daily_data.yml")
 
     loop do
       client = server.accept
@@ -23,13 +19,17 @@ class Service
       when ["GET", "/show/data"]
         content_type = "text/html"
         response_status_code = "200 OK"
+        response_message = "<ul>\n"
 
-        response_message = ""
+        all_data = {}
+        store.transaction do
+          all_data = store[:all_data]
+        end
 
-        response_message << "<ul>\n"
         all_data.each do |daily_data|
           response_message << "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
         end
+
         response_message << "</ul>\n"
         response_message << daily_data_form
       when ["POST", "/add/data"]
@@ -41,7 +41,11 @@ class Service
         body = client.read(headers['Content-Length'].to_i)
 
         new_daily_data = URI.decode_www_form(body).to_h
-        all_data << new_daily_data.transform_keys(&:to_sym)
+
+        store.transaction do
+          store[:all_data] << new_daily_data.transform_keys(&:to_sym)
+        end
+
       else
         content_type = "text/plain"
         response_status_code = "200 OK"
@@ -51,7 +55,7 @@ class Service
       puts response_message
 
       # I hardcoded the Location here for simplicity.
-      # It will be refactored later
+      # It will be refactored later.
       http_response = <<~MSG
         #{version_number} #{response_status_code}
         Content-Type: #{content_type}; charset=#{response_message.encoding.name}
@@ -67,6 +71,8 @@ class Service
       client.close
     end
   end
+
+  private
 
   def daily_data_form
     <<~STR
