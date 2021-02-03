@@ -1,24 +1,22 @@
-require 'socket'
 require 'cgi'
 require 'uri'
 require 'yaml/store'
+require 'rack/handler/puma'
+require 'rack'
 
 require_relative './http_request'
 
 class Service
   def initialize(port)
-    server = TCPServer.new(port)
-    store = YAML::Store.new("daily_data.yml")
-
-    loop do
-      client = server.accept
-      request_line = client.readline
-      method_token, target, version_number = request_line.split
+    app = -> environment {
+      method_token = environment['REQUEST_METHOD']
+      target = environment['PATH_INFO']
+      store = YAML::Store.new("daily_data.yml")
 
       case [method_token, target]
       when ["GET", "/show/data"]
         content_type = "text/html"
-        response_status_code = "200 OK"
+        status = 200
         response_message = "<ul>\n"
 
         all_data = {}
@@ -34,42 +32,30 @@ class Service
         response_message << daily_data_form
       when ["POST", "/add/data"]
         content_type = "text/html"
-        response_status_code = "303 See Other"
+        status = 303
         response_message = ""
 
-        headers = HttpRequest.headers(client)
-        body = client.read(headers['Content-Length'].to_i)
-
-        new_daily_data = URI.decode_www_form(body).to_h
+        new_daily_data = URI.decode_www_form(environment["rack.input"].read).to_h
 
         store.transaction do
           store[:all_data] << new_daily_data.transform_keys(&:to_sym)
         end
-
       else
         content_type = "text/plain"
-        response_status_code = "200 OK"
-        response_message =  "✅ Received a #{method_token} request to #{target} with #{version_number} on #{port}"
+        status = 200
+        response_message =  "✅ Received a #{method_token} request to #{target}"
       end
+          
+      headers = { 
+        'Content-Type' => "#{content_type}; charset=#{response_message.encoding.name}", 
+        "Location" => "/show/data" 
+      }
+      body = [response_message]
+    
+      [status, headers, body]
+    }
 
-      puts response_message
-
-      # I hardcoded the Location here for simplicity.
-      # It will be refactored later.
-      http_response = <<~MSG
-        #{version_number} #{response_status_code}
-        Content-Type: #{content_type}; charset=#{response_message.encoding.name}
-        Location: /show/data
-
-        #{response_message}
-      MSG
-
-      client.puts http_response
-
-      puts "🛑 Closing client socket"
-
-      client.close
-    end
+    Rack::Handler::Puma.run(app, :Port => port, :Verbose => true)
   end
 
   private
