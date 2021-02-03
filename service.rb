@@ -1,5 +1,4 @@
 require 'cgi'
-require 'uri'
 require 'yaml/store'
 require 'rack/handler/puma'
 require 'rack'
@@ -32,7 +31,7 @@ class Service
         status = 303
         response_message = ""
 
-        new_daily_data = URI.decode_www_form(request.body.read).to_h
+        new_daily_data = request.params 
 
         store.transaction do
           store[:all_data] << new_daily_data.transform_keys(&:to_sym)
