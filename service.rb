@@ -10,8 +10,7 @@ class Service
       request = Rack::Request.new(environment)
       store = YAML::Store.new("daily_data.yml")
 
-      case [request.request_method, request.path]
-      when ["GET", "/show/data"]
+      if request.get? && request.path == "/show/data"
         content_type = "text/html"
         status = 200
         response_message = "<ul>\n"
@@ -27,7 +26,8 @@ class Service
 
         response_message << "</ul>\n"
         response_message << daily_data_form
-      when ["POST", "/add/data"]
+
+      elsif request.post? && request.path == "/add/data"
         content_type = "text/html"
         status = 303
         response_message = ""
@@ -37,6 +37,7 @@ class Service
         store.transaction do
           store[:all_data] << new_daily_data.transform_keys(&:to_sym)
         end
+        
       else
         content_type = "text/plain"
         status = 200
