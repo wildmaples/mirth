@@ -7,11 +7,10 @@ require 'rack'
 class Service
   def initialize(port)
     app = -> environment {
-      method_token = environment['REQUEST_METHOD']
-      target = environment['PATH_INFO']
+      request = Rack::Request.new(environment)
       store = YAML::Store.new("daily_data.yml")
 
-      case [method_token, target]
+      case [request.request_method, request.path]
       when ["GET", "/show/data"]
         content_type = "text/html"
         status = 200
@@ -33,7 +32,7 @@ class Service
         status = 303
         response_message = ""
 
-        new_daily_data = URI.decode_www_form(environment["rack.input"].read).to_h
+        new_daily_data = URI.decode_www_form(request.body.read).to_h
 
         store.transaction do
           store[:all_data] << new_daily_data.transform_keys(&:to_sym)
@@ -41,7 +40,7 @@ class Service
       else
         content_type = "text/plain"
         status = 200
-        response_message =  "✅ Received a #{method_token} request to #{target}"
+        response_message =  "✅ Received a #{request.request_method} request to #{request.path}"
       end
           
       headers = { 
