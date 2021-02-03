@@ -4,8 +4,6 @@ require 'yaml/store'
 require 'rack/handler/puma'
 require 'rack'
 
-require_relative './http_request'
-
 class Service
   def initialize(port)
     app = -> environment {
