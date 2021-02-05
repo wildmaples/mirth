@@ -1,5 +1,4 @@
 require 'cgi'
-require 'uri'
 require 'yaml/store'
 require 'rack/handler/puma'
 require 'rack'
@@ -7,12 +6,10 @@ require 'rack'
 class Service
   def initialize(port)
     app = -> environment {
-      method_token = environment['REQUEST_METHOD']
-      target = environment['PATH_INFO']
+      request = Rack::Request.new(environment)
       store = YAML::Store.new("daily_data.yml")
 
-      case [method_token, target]
-      when ["GET", "/show/data"]
+      if request.get? && request.path == "/show/data"
         content_type = "text/html"
         status = 200
         response_message = "<ul>\n"
@@ -28,20 +25,22 @@ class Service
 
         response_message << "</ul>\n"
         response_message << daily_data_form
-      when ["POST", "/add/data"]
+
+      elsif request.post? && request.path == "/add/data"
         content_type = "text/html"
         status = 303
         response_message = ""
 
-        new_daily_data = URI.decode_www_form(environment["rack.input"].read).to_h
+        new_daily_data = request.params 
 
         store.transaction do
           store[:all_data] << new_daily_data.transform_keys(&:to_sym)
         end
+        
       else
         content_type = "text/plain"
         status = 200
-        response_message =  "✅ Received a #{method_token} request to #{target}"
+        response_message =  "✅ Received a #{request.request_method} request to #{request.path}"
       end
           
       headers = { 
