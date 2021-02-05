@@ -2,6 +2,7 @@ require 'cgi'
 require 'yaml/store'
 require 'rack/handler/puma'
 require 'rack'
+require 'json'
 
 class Service
   def initialize(port)
@@ -33,7 +34,14 @@ class Service
         end
 
         response.redirect('/show/data', status: 303)
-      
+
+      elsif request.get? && request.path == "/daily_data.json"
+        response.content_type = "text/plain"
+        all_data = {}
+        store.transaction do
+          all_data = store[:all_data]
+        end
+        response.write(all_data.to_json)
       else
         response.content_type = "text/plain; charset=UTF-8"
         response.write("✅ Received a #{request.request_method} request to #{request.path}!")
