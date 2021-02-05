@@ -7,12 +7,12 @@ class Service
   def initialize(port)
     app = -> environment {
       request = Rack::Request.new(environment)
+      response = Rack::Response.new
       store = YAML::Store.new("daily_data.yml")
 
       if request.get? && request.path == "/show/data"
-        content_type = "text/html"
-        status = 200
-        response_message = "<ul>\n"
+        response.write("<ul>\n")
+        response.content_type = "text/html; charset=UTF-8"
 
         all_data = {}
         store.transaction do
@@ -20,36 +20,26 @@ class Service
         end
 
         all_data.each do |daily_data|
-          response_message << "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
+          response.write "<li> On this day <b>#{CGI.escapeHTML(daily_data[:date])}</b>, #{CGI.escapeHTML(daily_data[:step_count])}, #{CGI.escapeHTML(daily_data[:notes])}</li>\n"
         end
 
-        response_message << "</ul>\n"
-        response_message << daily_data_form
+        response.write "</ul>\n"
+        response.write daily_data_form
 
       elsif request.post? && request.path == "/add/data"
-        content_type = "text/html"
-        status = 303
-        response_message = ""
-
-        new_daily_data = request.params 
-
+        new_daily_data = request.params.transform_keys(&:to_sym)
         store.transaction do
-          store[:all_data] << new_daily_data.transform_keys(&:to_sym)
+          store[:all_data] << new_daily_data
         end
-        
+
+        response.redirect('/show/data', status: 303)
+      
       else
-        content_type = "text/plain"
-        status = 200
-        response_message =  "✅ Received a #{request.request_method} request to #{request.path}"
+        response.content_type = "text/plain; charset=UTF-8"
+        response.write("✅ Received a #{request.request_method} request to #{request.path}!")
       end
           
-      headers = { 
-        'Content-Type' => "#{content_type}; charset=#{response_message.encoding.name}", 
-        "Location" => "/show/data" 
-      }
-      body = [response_message]
-    
-      [status, headers, body]
+      response.finish
     }
 
     Rack::Handler::Puma.run(app, :Port => port, :Verbose => true)
