@@ -1,4 +1,8 @@
-require_relative 'service'
+require_relative 'service_app'
+require 'rack/handler/puma'
 
 $stdout.sync = true # Turn on auto-flushing
-Service.new(1234)
+
+app = ServiceApp::Mirth
+
+Rack::Handler::Puma.run(app, :Port => 1234, :Verbose => true)
