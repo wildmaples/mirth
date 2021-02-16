@@ -12,7 +12,23 @@ ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "mirth.sql
 
 router = ActionDispatch::Routing::RouteSet.new
 
-router.draw do 
+router.draw do
+  get '/show/data', to: -> environment {
+    request = Rack::Request.new(environment)
+    response = Rack::Response.new
+
+    response.write("<ul>\n")
+    response.content_type = "text/html; charset=UTF-8"
+    
+    DailyData.all.each do |daily_data|
+      response.write "<li> On this day <b>#{CGI.escapeHTML(daily_data.date)}</b>, #{CGI.escapeHTML(daily_data.step_count.to_s)}, #{CGI.escapeHTML(daily_data.notes)}</li>\n"
+    end
+
+    response.write "</ul>\n"
+    response.write daily_data_form
+    response.finish
+  }
+
   match '*path', via: :all, to: -> environment {
     request = Rack::Request.new(environment)
     response = Rack::Response.new  
@@ -20,6 +36,18 @@ router.draw do
     response.write("✅ Received a #{request.request_method} request to #{request.path}!")
     response.finish
   }
+
+  def daily_data_form
+    <<~STR
+      <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
+        <p><label>Date <input type="date" name="date"></label></p>
+        <p><label>Step Count <input type="number" name="step_count"></label></p>
+        <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
+  
+        <p><button>Submit daily data</button></p>
+      </form>
+    STR
+  end
 end 
 
 # app = -> environment {
@@ -48,17 +76,5 @@ end
       
 #   response.finish
 # }
-
-def self.daily_data_form
-  <<~STR
-    <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
-      <p><label>Date <input type="date" name="date"></label></p>
-      <p><label>Step Count <input type="number" name="step_count"></label></p>
-      <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
-
-      <p><button>Submit daily data</button></p>
-    </form>
-  STR
-end
 
 Rack::Handler::Puma.run(router, :Port => 1234, :Verbose => true)
