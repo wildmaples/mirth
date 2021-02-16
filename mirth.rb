@@ -2,6 +2,7 @@ require 'action_dispatch'
 require 'active_record'
 require 'cgi'
 require 'rack'
+require 'rack/charset'
 require 'rack/handler/puma'
 
 $stdout.sync = true # Turn on auto-flushing
@@ -18,7 +19,7 @@ router.draw do
     response = Rack::Response.new
 
     response.write("<ul>\n")
-    response.content_type = "text/html; charset=UTF-8"
+    response.content_type = "text/html"
     
     DailyData.all.each do |daily_data|
       response.write "<li> On this day <b>#{CGI.escapeHTML(daily_data.date)}</b>, #{CGI.escapeHTML(daily_data.step_count.to_s)}, #{CGI.escapeHTML(daily_data.notes)}</li>\n"
@@ -41,7 +42,7 @@ router.draw do
   match '*path', via: :all, to: -> environment {
     request = Rack::Request.new(environment)
     response = Rack::Response.new  
-    response.content_type = "text/plain; charset=UTF-8"
+    response.content_type = "text/plain"
     response.write("✅ Received a #{request.request_method} request to #{request.path}!")
     response.finish
   }
@@ -59,4 +60,5 @@ router.draw do
   end
 end 
 
-Rack::Handler::Puma.run(router, :Port => 1234, :Verbose => true)
+app_with_charset = Rack::Charset.new(router, 'utf-8')
+Rack::Handler::Puma.run(app_with_charset, :Port => 1234, :Verbose => true)
