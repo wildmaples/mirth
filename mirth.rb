@@ -29,6 +29,15 @@ router.draw do
     response.finish
   }
 
+  post '/add/data', to: -> environment {
+    request = Rack::Request.new(environment)
+    response = Rack::Response.new
+    params = request.params
+    DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
+    response.redirect('/show/data', 303)
+    response.finish
+  }
+
   match '*path', via: :all, to: -> environment {
     request = Rack::Request.new(environment)
     response = Rack::Response.new  
