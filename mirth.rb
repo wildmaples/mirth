@@ -7,9 +7,9 @@ require 'rack/handler/puma'
 
 $stdout.sync = true # Turn on auto-flushing
 
-class DailyData < ActiveRecord::Base; end
-
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "mirth.sqlite3")
+
+class DailyData < ActiveRecord::Base; end
 
 router = ActionDispatch::Routing::RouteSet.new
 
@@ -26,7 +26,15 @@ router.draw do
     end
 
     response.write "</ul>\n"
-    response.write daily_data_form
+    response.write <<~STR
+      <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
+        <p><label>Date <input type="date" name="date"></label></p>
+        <p><label>Step Count <input type="number" name="step_count"></label></p>
+        <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
+  
+        <p><button>Submit daily data</button></p>
+      </form>
+    STR
     response.finish
   }
 
@@ -46,18 +54,6 @@ router.draw do
     response.write("✅ Received a #{request.request_method} request to #{request.path}!")
     response.finish
   }
-
-  def daily_data_form
-    <<~STR
-      <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
-        <p><label>Date <input type="date" name="date"></label></p>
-        <p><label>Step Count <input type="number" name="step_count"></label></p>
-        <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
-  
-        <p><button>Submit daily data</button></p>
-      </form>
-    STR
-  end
 end 
 
 app_with_charset = Rack::Charset.new(router, 'utf-8')
