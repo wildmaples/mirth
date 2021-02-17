@@ -11,6 +11,12 @@ ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "mirth.sql
 
 class DailyData < ActiveRecord::Base; end
 
+class DailyDataController < ActionController::Base
+  def all_paths
+    render(plain: "✅ Received a #{request.request_method} request to #{request.path}!")
+  end
+end
+
 router = ActionDispatch::Routing::RouteSet.new
 
 router.draw do
@@ -47,13 +53,8 @@ router.draw do
     response.finish
   }
 
-  match '*path', via: :all, to: -> environment {
-    request = Rack::Request.new(environment)
-    response = Rack::Response.new  
-    response.content_type = "text/plain"
-    response.write("✅ Received a #{request.request_method} request to #{request.path}!")
-    response.finish
-  }
+  match '*path', via: :all, to: DailyDataController.action(:all_paths)
+
 end 
 
 app_with_charset = Rack::Charset.new(router, 'utf-8')
