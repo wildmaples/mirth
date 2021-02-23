@@ -1,3 +1,4 @@
+require 'action_controller'
 require 'action_dispatch'
 require 'active_record'
 require 'cgi'
@@ -11,22 +12,19 @@ ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "mirth.sql
 
 class DailyData < ActiveRecord::Base; end
 
-router = ActionDispatch::Routing::RouteSet.new
+class DailyDataController < ActionController::Base
+  def all_paths
+    render(plain: "✅ Received a #{request.request_method} request to #{request.path}!")
+  end
 
-router.draw do
-  get '/show/data', to: -> environment {
-    request = Rack::Request.new(environment)
-    response = Rack::Response.new
-
-    response.write("<ul>\n")
-    response.content_type = "text/html"
-    
+  def show_data
+    response_body = "<ul>\n"
     DailyData.all.each do |daily_data|
-      response.write "<li> On this day <b>#{CGI.escapeHTML(daily_data.date)}</b>, #{CGI.escapeHTML(daily_data.step_count.to_s)}, #{CGI.escapeHTML(daily_data.notes)}</li>\n"
+      response_body += "<li> On this day <b>#{CGI.escapeHTML(daily_data.date)}</b>, #{CGI.escapeHTML(daily_data.step_count.to_s)}, #{CGI.escapeHTML(daily_data.notes)}</li>\n"
     end
 
-    response.write "</ul>\n"
-    response.write <<~STR
+    response_body += "</ul>\n"
+    response_body += <<~STR
       <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
         <p><label>Date <input type="date" name="date"></label></p>
         <p><label>Step Count <input type="number" name="step_count"></label></p>
@@ -35,25 +33,23 @@ router.draw do
         <p><button>Submit daily data</button></p>
       </form>
     STR
-    response.finish
-  }
+ 
+    render(html: response_body.html_safe)
+  end
 
-  post '/add/data', to: -> environment {
-    request = Rack::Request.new(environment)
-    response = Rack::Response.new
-    params = request.params
+  def add_data
     DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    response.redirect('/show/data', 303)
-    response.finish
-  }
+    redirect_to("/show/data")
+    render(status: :see_other)
+  end
+end
 
-  match '*path', via: :all, to: -> environment {
-    request = Rack::Request.new(environment)
-    response = Rack::Response.new  
-    response.content_type = "text/plain"
-    response.write("✅ Received a #{request.request_method} request to #{request.path}!")
-    response.finish
-  }
+router = ActionDispatch::Routing::RouteSet.new
+
+router.draw do
+  get '/show/data', to: DailyDataController.action(:show_data)
+  post '/add/data', to: DailyDataController.action(:add_data)
+  match '*path', via: :all, to: DailyDataController.action(:all_paths)
 end 
 
 app_with_charset = Rack::Charset.new(router, 'utf-8')
