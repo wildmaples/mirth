@@ -17,8 +17,10 @@ class DailyDataController < ActionController::Base
   end
 
   def show_data
+    @all_daily_data = DailyData.all
+
     template = <<~HERE
-      <ul><% DailyData.all.each do |daily_data| %> 
+      <ul><% @all_daily_data.each do |daily_data| %> 
         <li> On this day <b><%= daily_data.date %></b>, <%= daily_data.step_count %>, <%= daily_data.notes %></li>
       <% end %>
       </ul>
