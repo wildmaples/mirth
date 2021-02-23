@@ -36,23 +36,19 @@ class DailyDataController < ActionController::Base
  
     render(html: response_body.html_safe)
   end
+
+  def add_data
+    DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
+    redirect_to("/show/data")
+  end
 end
 
 router = ActionDispatch::Routing::RouteSet.new
 
 router.draw do
   get '/show/data', to: DailyDataController.action(:show_data)
-  post '/add/data', to: -> environment {
-    request = Rack::Request.new(environment)
-    response = Rack::Response.new
-    params = request.params
-    DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    response.redirect('/show/data', 303)
-    response.finish
-  }
-
+  post '/add/data', to: DailyDataController.action(:add_data)
   match '*path', via: :all, to: DailyDataController.action(:all_paths)
-
 end 
 
 app_with_charset = Rack::Charset.new(router, 'utf-8')
