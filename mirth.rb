@@ -1,7 +1,6 @@
 require 'action_controller'
 require 'action_dispatch'
 require 'active_record'
-require 'cgi'
 require 'rack'
 require 'rack/charset'
 require 'rack/handler/puma'
@@ -18,23 +17,24 @@ class DailyDataController < ActionController::Base
   end
 
   def show_data
-    response_body = "<ul>\n"
-    DailyData.all.each do |daily_data|
-      response_body += "<li> On this day <b>#{CGI.escapeHTML(daily_data.date)}</b>, #{CGI.escapeHTML(daily_data.step_count.to_s)}, #{CGI.escapeHTML(daily_data.notes)}</li>\n"
-    end
+    @all_daily_data = DailyData.all
 
-    response_body += "</ul>\n"
-    response_body += <<~STR
+    template = <<~HERE
+      <ul><% @all_daily_data.each do |daily_data| %> 
+        <li> On this day <b><%= daily_data.date %></b>, <%= daily_data.step_count %>, <%= daily_data.notes %></li>
+      <% end %>
+      </ul>
+
       <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
         <p><label>Date <input type="date" name="date"></label></p>
         <p><label>Step Count <input type="number" name="step_count"></label></p>
         <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
-  
+
         <p><button>Submit daily data</button></p>
       </form>
-    STR
- 
-    render(html: response_body.html_safe)
+    HERE
+
+    render(inline: template)
   end
 
   def add_data
