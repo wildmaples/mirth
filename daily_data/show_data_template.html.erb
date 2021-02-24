@@ -1,0 +1,12 @@
+ <ul><% @all_daily_data.each do |daily_data| %> 
+   <li> On this day <b><%= daily_data.date %></b>, <%= daily_data.step_count %>, <%= daily_data.notes %></li>
+ <% end %>
+ </ul>
+
+ <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
+   <p><label>Date <input type="date" name="date"></label></p>
+   <p><label>Step Count <input type="number" name="step_count"></label></p>
+   <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
+
+   <p><button>Submit daily data</button></p>
+ </form>

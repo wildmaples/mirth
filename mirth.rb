@@ -8,6 +8,7 @@ require 'rack/handler/puma'
 $stdout.sync = true # Turn on auto-flushing
 
 ActiveRecord::Base.establish_connection(adapter: "sqlite3", database: "mirth.sqlite3")
+ActionController::Base.prepend_view_path(".")
 
 class DailyData < ActiveRecord::Base; end
 
@@ -18,23 +19,7 @@ class DailyDataController < ActionController::Base
 
   def show_data
     @all_daily_data = DailyData.all
-
-    template = <<~HERE
-      <ul><% @all_daily_data.each do |daily_data| %> 
-        <li> On this day <b><%= daily_data.date %></b>, <%= daily_data.step_count %>, <%= daily_data.notes %></li>
-      <% end %>
-      </ul>
-
-      <form action="/add/data" method="post" enctype="application/x-www-form-urlencoded">
-        <p><label>Date <input type="date" name="date"></label></p>
-        <p><label>Step Count <input type="number" name="step_count"></label></p>
-        <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
-
-        <p><button>Submit daily data</button></p>
-      </form>
-    HERE
-
-    render(inline: template)
+    render("show_data_template")
   end
 
   def add_data
