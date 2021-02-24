@@ -19,7 +19,6 @@ class DailyDataController < ActionController::Base
 
   def show_data
     @all_daily_data = DailyData.all
-    render("show_data_template")
   end
 
   def add_data
