@@ -1,8 +1,6 @@
 require 'action_controller'
 require 'action_dispatch'
 require 'active_record'
-require 'rack'
-require 'rack/charset'
 require 'rack/handler/puma'
 
 $stdout.sync = true # Turn on auto-flushing
@@ -23,8 +21,7 @@ class DailyDataController < ActionController::Base
 
   def add_data
     DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    redirect_to("/show/data")
-    render(status: :see_other)
+    redirect_to("/show/data", status: 303)
   end
 end
 
@@ -36,5 +33,4 @@ router.draw do
   match '*path', via: :all, to: DailyDataController.action(:all_paths)
 end 
 
-app_with_charset = Rack::Charset.new(router, 'utf-8')
-Rack::Handler::Puma.run(app_with_charset, :Port => 1234, :Verbose => true)
+Rack::Handler::Puma.run(router, :Port => 1234, :Verbose => true)
