@@ -23,8 +23,7 @@ class DailyDataController < ActionController::Base
 
   def add_data
     DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    redirect_to("/show/data")
-    render(status: :see_other)
+    redirect_to("/show/data", status: 303)
   end
 end
 
