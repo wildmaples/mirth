@@ -3,10 +3,21 @@
  <% end %>
  </ul>
 
- <%= form_tag("/add/data", method: :post) do -%>
-   <p><label>Date <input type="date" name="date"></label></p>
-   <p><label>Step Count <input type="number" name="step_count"></label></p>
-   <p><label>Notes <textarea name="notes" rows="5"></textarea></label></p>
+<%= form_tag("/add/data", method: :post) do %>
+  <%= content_tag(:p) do %>
+    <%= label_tag("date", "Date") %>
+    <%= date_field_tag("date") %>
+  <% end %>
 
-   <p><button>Submit daily data</button></p>
+  <%= content_tag(:p) do %>
+    <%= label_tag("step_count", "Step Count") %>
+    <%= number_field_tag("step_count") %>
+  <% end %>
+
+  <%= content_tag(:p) do %>
+    <%= label_tag("notes", "Notes") %>
+    <%= text_area_tag("notes") %>
+  <% end %>
+  
+  <%= button_tag("Submit daily data") %>
 <% end -%>
