@@ -1,7 +1,7 @@
 <%= content_tag(:ul) do %>
   <% @all_daily_data.each do |daily_data| %> 
     <%= content_tag(:li) do %>
-      On this day <%= content_tag(:b) do %> <%= daily_data.date %><% end %>, <%= daily_data.step_count %>, <%= daily_data.notes %>
+      On this day <%= content_tag(:b, daily_data.date) %>, <%= daily_data.step_count %>, <%= daily_data.notes %>
     <% end %>
   <% end %>
 <% end %>
