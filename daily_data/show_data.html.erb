@@ -6,7 +6,7 @@
   <% end %>
 <% end %>
 
-<%= form_tag("/add/data", method: :post) do %>
+<%= form_tag("/add/data") do %>
   <%= content_tag(:p) do %>
     <%= label_tag("date", "Date") %>
     <%= date_field_tag("date") %>
