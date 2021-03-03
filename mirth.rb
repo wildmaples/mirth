@@ -28,9 +28,9 @@ end
 router = ActionDispatch::Routing::RouteSet.new
 
 router.draw do
-  get '/show/data', to: DailyDataController.action(:show_data)
-  post '/add/data', to: DailyDataController.action(:add_data)
-  match '*path', via: :all, to: DailyDataController.action(:all_paths)
+  get '/show/data', to: 'daily_data#show_data'
+  post '/add/data', to: 'daily_data#add_data'
+  match '*path', via: :all, to: 'daily_data#all_paths'
 end 
 
 Rack::Handler::Puma.run(router, :Port => 1234, :Verbose => true)
