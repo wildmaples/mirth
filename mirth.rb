@@ -15,21 +15,20 @@ class DailyDataController < ActionController::Base
     render(plain: "✅ Received a #{request.request_method} request to #{request.path}!")
   end
 
-  def show_data
+  def index
     @all_daily_data = DailyData.all
   end
 
-  def add_data
+  def create
     DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    redirect_to("/show/data", status: 303)
+    redirect_to("/daily_data", status: 303)
   end
 end
 
 router = ActionDispatch::Routing::RouteSet.new
 
 router.draw do
-  get '/show/data', to: 'daily_data#show_data'
-  post '/add/data', to: 'daily_data#add_data'
+  resources :daily_data
   match '*path', via: :all, to: 'daily_data#all_paths'
 end 
 
