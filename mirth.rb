@@ -21,11 +21,12 @@ class DailyDataController < ActionController::Base
 
   def create
     DailyData.create(date: params['date'], step_count: params["step_count"], notes: params["notes"])
-    redirect_to("/daily_data", status: 303)
+    redirect_to(daily_data_path, status: 303)
   end
 end
 
 router = ActionDispatch::Routing::RouteSet.new
+DailyDataController.include(router.url_helpers)
 
 router.draw do
   resources :daily_data
